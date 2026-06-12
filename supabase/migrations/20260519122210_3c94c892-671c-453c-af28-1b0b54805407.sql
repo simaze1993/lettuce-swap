@@ -1,28 +1,10 @@
--- 1. Restrict Realtime channel subscriptions on `messages` topic to offer participants.
---    Topics use the convention `offer:<offer_id>`.
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+-- Note: this migration previously enabled RLS + a policy on realtime.messages
+-- (broadcast/presence channel authorization). That table is owned by the
+-- supabase_realtime_admin role, so `supabase db push` fails on it with an
+-- ownership error, and the app only uses postgres_changes (not broadcast),
+-- so the policy guarded nothing. Removed.
 
-DROP POLICY IF EXISTS "realtime_messages_select_offer_participants" ON realtime.messages;
-CREATE POLICY "realtime_messages_select_offer_participants"
-ON realtime.messages
-FOR SELECT
-TO authenticated
-USING (
-  -- Allow postgres_changes events on tables (no topic / extension is 'postgres_changes')
-  extension = 'postgres_changes'
-  OR
-  -- For broadcast/presence on offer:<uuid> topics, require participation
-  (
-    topic LIKE 'offer:%'
-    AND EXISTS (
-      SELECT 1 FROM public.offers o
-      WHERE o.id::text = split_part(realtime.messages.topic, ':', 2)
-        AND (o.from_user_id = auth.uid() OR o.to_user_id = auth.uid())
-    )
-  )
-);
-
--- 2. Add missing UPDATE policy on item-images bucket (owner-scoped folder)
+-- Add missing UPDATE policy on item-images bucket (owner-scoped folder)
 DROP POLICY IF EXISTS "item_images_update_own_folder" ON storage.objects;
 CREATE POLICY "item_images_update_own_folder"
 ON storage.objects
