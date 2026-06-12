@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { SwapModeBadge, DueBadge } from "@/components/swap-badges";
+import { formatLeaves } from "@/lib/leaves";
 import { toast } from "sonner";
 import {
   ArrowDownLeft,
@@ -24,6 +26,9 @@ type OfferRow = {
   message: string;
   created_at: string;
   updated_at: string | null;
+  swap_type: string;
+  return_by: string | null;
+  leaves_amount: number | null;
   from_user_id: string;
   to_user_id: string;
   requested: { id: string; title: string } | null;
@@ -86,7 +91,7 @@ function OffersList() {
       const { data, error } = await supabase
         .from("offers")
         .select(
-          `id, status, message, created_at, updated_at, from_user_id, to_user_id,
+          `id, status, message, created_at, updated_at, swap_type, return_by, leaves_amount, from_user_id, to_user_id,
           requested:items!offers_requested_item_id_fkey(id, title),
           offered:items!offers_offered_item_id_fkey(id, title),
           from_user:profiles!offers_from_user_id_fkey(id, display_name, verified),
@@ -277,19 +282,23 @@ function OffersList() {
           <div className="grid grid-cols-1 gap-4">
             {filtered.map((o) => {
               const isIncoming = o.to_user_id === user?.id;
+              const offeredLabel =
+                o.offered?.title ?? (o.leaves_amount ? formatLeaves(o.leaves_amount) : undefined);
               return (
                 <OfferCard
                   key={o.id}
                   direction={isIncoming ? "incoming" : "outgoing"}
                   status={o.status}
+                  swapType={o.swap_type}
+                  returnBy={o.return_by}
                   updatedAt={o.updated_at ?? o.created_at}
                   counterpartyId={(isIncoming ? o.from_user : o.to_user)?.id}
                   counterpartyName={
                     (isIncoming ? o.from_user : o.to_user)?.display_name ?? "Someone"
                   }
                   counterpartyVerified={!!(isIncoming ? o.from_user : o.to_user)?.verified}
-                  yourItem={(isIncoming ? o.requested : o.offered)?.title}
-                  theirItem={(isIncoming ? o.offered : o.requested)?.title}
+                  yourItem={isIncoming ? o.requested?.title : offeredLabel}
+                  theirItem={isIncoming ? offeredLabel : o.requested?.title}
                   message={o.message}
                   actions={
                     <>
@@ -356,6 +365,8 @@ function StatPill({
 function OfferCard({
   direction,
   status,
+  swapType,
+  returnBy,
   updatedAt,
   counterpartyId,
   counterpartyName,
@@ -367,6 +378,8 @@ function OfferCard({
 }: {
   direction: "incoming" | "outgoing";
   status: string;
+  swapType: string;
+  returnBy: string | null;
   updatedAt: string;
   counterpartyId?: string;
   counterpartyName: string;
@@ -411,7 +424,11 @@ function OfferCard({
             </p>
           </div>
         </div>
-        <StatusBadge status={status} />
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <StatusBadge status={status} />
+          <SwapModeBadge swapType={swapType} />
+          {swapType === "temporary" && status === "accepted" && <DueBadge returnBy={returnBy} />}
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">

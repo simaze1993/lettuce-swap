@@ -17,6 +17,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { SwapModeBadge, DueBadge } from "@/components/swap-badges";
+import { formatLeaves } from "@/lib/leaves";
 import { toast } from "sonner";
 import { CalendarClock, MapPin, Check, X, Lock, AlertCircle } from "lucide-react";
 
@@ -131,6 +133,7 @@ function Chat() {
   const otherT = other as { id: string; display_name: string } | null;
   const isAccepted = offer.status === "accepted";
   const isCompleted = offer.status === "completed";
+  const isTemporary = offer.swap_type === "temporary";
   const canInteract = isAccepted; // chat + meetup only when accepted
   const allMsgs = msgsQ.data ?? [];
   const meetupMsgs = allMsgs
@@ -237,8 +240,15 @@ function Chat() {
           )}
         </div>
         <div className="text-sm text-muted-foreground">
-          <em>{(offer.offered as { title: string })?.title}</em> ⇄{" "}
-          <em>{(offer.requested as { title: string })?.title}</em>
+          <em>
+            {(offer.offered as { title: string } | null)?.title ??
+              (offer.leaves_amount ? formatLeaves(offer.leaves_amount) : "—")}
+          </em>{" "}
+          ⇄ <em>{(offer.requested as { title: string })?.title}</em>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <SwapModeBadge swapType={offer.swap_type} />
+          {isTemporary && (isAccepted || isCompleted) && <DueBadge returnBy={offer.return_by} />}
         </div>
         <div className="flex items-center gap-2 pt-1 flex-wrap">
           <span
@@ -255,6 +265,7 @@ function Chat() {
           {isAccepted && (
             <CompleteSwapDialog
               onConfirm={markCompleted}
+              isTemporary={isTemporary}
               disabled={!canComplete}
               disabledReason={completeBlockReason ?? undefined}
             />
@@ -514,10 +525,12 @@ function MeetupDialog({
 
 function CompleteSwapDialog({
   onConfirm,
+  isTemporary,
   disabled,
   disabledReason,
 }: {
   onConfirm: (notes: string) => Promise<void>;
+  isTemporary?: boolean;
   disabled?: boolean;
   disabledReason?: string;
 }) {
@@ -529,6 +542,7 @@ function CompleteSwapDialog({
   const [busy, setBusy] = useState(false);
 
   const ready = handoff && meetup && notesOk;
+  const triggerLabel = isTemporary ? "Mark returned" : "Mark completed";
 
   const confirm = async () => {
     if (!ready) return;
@@ -552,34 +566,47 @@ function CompleteSwapDialog({
           aria-disabled={disabled}
           aria-label={
             disabled
-              ? `Mark completed (disabled — ${disabledReason ?? "not yet available"})`
-              : "Mark swap completed"
+              ? `${triggerLabel} (disabled — ${disabledReason ?? "not yet available"})`
+              : isTemporary
+                ? "Mark loan returned"
+                : "Mark swap completed"
           }
           title={disabled ? disabledReason : undefined}
         >
           {disabled && <Lock className="h-3 w-3" aria-hidden="true" />}
-          <span>Mark completed</span>
+          <span>{triggerLabel}</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm swap completion</DialogTitle>
+          <DialogTitle>
+            {isTemporary ? "Confirm the loan was returned" : "Confirm swap completion"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 text-sm">
           <p className="text-muted-foreground">
-            Tick all three so we know the swap really happened. You'll be taken to the review
-            afterwards.
+            Tick all three so we know the {isTemporary ? "items came back" : "swap really happened"}
+            . You'll be taken to the review afterwards.
           </p>
           <label className="flex items-start gap-3 cursor-pointer">
             <Checkbox checked={handoff} onCheckedChange={(v) => setHandoff(!!v)} />
             <span>
-              I confirm the <strong>item handoff</strong> (both items changed hands as agreed).
+              {isTemporary ? (
+                <>
+                  I confirm both <strong>items were returned</strong> to their owners.
+                </>
+              ) : (
+                <>
+                  I confirm the <strong>item handoff</strong> (both items changed hands as agreed).
+                </>
+              )}
             </span>
           </label>
           <label className="flex items-start gap-3 cursor-pointer">
             <Checkbox checked={meetup} onCheckedChange={(v) => setMeetup(!!v)} />
             <span>
-              The <strong>meet-up was completed</strong> (in person or via shipping).
+              The <strong>{isTemporary ? "return meet-up" : "meet-up"} was completed</strong> (in
+              person or via shipping).
             </span>
           </label>
           <label className="flex items-start gap-3 cursor-pointer">
@@ -604,7 +631,7 @@ function CompleteSwapDialog({
         </div>
         <DialogFooter>
           <Button onClick={confirm} disabled={!ready || busy}>
-            {busy ? "Saving…" : "Complete swap"}
+            {busy ? "Saving…" : isTemporary ? "Complete loan" : "Complete swap"}
           </Button>
         </DialogFooter>
       </DialogContent>

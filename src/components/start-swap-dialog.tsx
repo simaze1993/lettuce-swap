@@ -23,6 +23,15 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { SwapModeFields } from "@/components/swap-mode-fields";
+import {
+  OfferKindToggle,
+  LeavesAmountField,
+  leavesAmountError,
+  type OfferKind,
+} from "@/components/leaves-offer-fields";
+import { useLeavesBalance } from "@/hooks/use-leaves";
+import type { SwapType } from "@/lib/swap";
 
 export function StartSwapDialog({
   otherUserId,
@@ -46,11 +55,16 @@ export function StartSwapDialog({
     if (!isControlled) setInternalOpen(v);
     onOpenChange?.(v);
   };
+  const [kind, setKind] = useState<OfferKind>("item");
   const [mine, setMine] = useState("");
   const [theirs, setTheirs] = useState("");
+  const [leaves, setLeaves] = useState("");
   const [message, setMessage] = useState("");
+  const [swapType, setSwapType] = useState<SwapType>("definitive");
+  const [returnBy, setReturnBy] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState(false);
+  const { balance } = useLeavesBalance();
 
   const { data: myItems, isLoading: loadingMine } = useQuery({
     queryKey: ["my-available", user?.id, open],
@@ -80,22 +94,31 @@ export function StartSwapDialog({
     },
   });
 
-  const mineErr = touched && !mine ? "Pick one of your items to offer." : "";
+  const mineErr = touched && kind === "item" && !mine ? "Pick one of your items to offer." : "";
   const theirsErr =
     touched && !theirs ? `Pick an item from ${otherUserName ?? "this member"}.` : "";
+  const leavesErr = touched && kind === "leaves" ? leavesAmountError(leaves, balance) : "";
+  const returnErr =
+    touched && swapType === "temporary" && !returnBy ? "Pick a return date for the loan." : "";
 
   const submit = async () => {
     setTouched(true);
-    if (!mine || !theirs) return;
+    if (!theirs) return;
+    if (kind === "item" && !mine) return;
+    if (kind === "leaves" && leavesAmountError(leaves, balance)) return;
+    if (swapType === "temporary" && !returnBy) return;
     setSubmitting(true);
     const { data, error } = await supabase
       .from("offers")
       .insert({
         from_user_id: user!.id,
         to_user_id: otherUserId,
-        offered_item_id: mine,
+        offered_item_id: kind === "item" ? mine : null,
+        leaves_amount: kind === "leaves" ? Number(leaves) : null,
         requested_item_id: theirs,
         message,
+        swap_type: swapType,
+        return_by: swapType === "temporary" ? returnBy : null,
       })
       .select("id")
       .single();
@@ -130,51 +153,63 @@ export function StartSwapDialog({
             </div>
             <Skeleton className="h-20 w-full" />
           </div>
-        ) : !myItems || myItems.length === 0 ? (
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">
-              You need at least one available item to start a swap.
-            </p>
-            <Button asChild onClick={() => setOpen(false)}>
-              <Link to="/me/items/new">List an item</Link>
-            </Button>
-          </div>
         ) : !theirItems || theirItems.length === 0 ? (
           <p className="text-sm text-muted-foreground py-2">
             {otherUserName ?? "This member"} has no items available right now.
           </p>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Your item to offer
-              </label>
-              <Select
-                value={mine}
-                onValueChange={(v) => {
-                  setMine(v);
-                }}
-              >
-                <SelectTrigger
-                  className={mineErr ? "border-destructive focus:ring-destructive" : ""}
-                  aria-invalid={!!mineErr}
-                >
-                  <SelectValue placeholder="Choose one of your items" />
-                </SelectTrigger>
-                <SelectContent>
-                  {myItems.map((i) => (
-                    <SelectItem key={i.id} value={i.id}>
-                      {i.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {mineErr && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" /> {mineErr}
+            <OfferKindToggle kind={kind} onKindChange={setKind} disabled={submitting} />
+            {kind === "leaves" ? (
+              <LeavesAmountField
+                amount={leaves}
+                onAmountChange={setLeaves}
+                balance={balance}
+                error={leavesErr}
+                disabled={submitting}
+              />
+            ) : !myItems || myItems.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  You have no available items to offer — list one, or offer Lettuce Leaves 🥬
+                  instead.
                 </p>
-              )}
-            </div>
+                <Button asChild size="sm" variant="outline" onClick={() => setOpen(false)}>
+                  <Link to="/me/items/new">List an item</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Your item to offer
+                </label>
+                <Select
+                  value={mine}
+                  onValueChange={(v) => {
+                    setMine(v);
+                  }}
+                >
+                  <SelectTrigger
+                    className={mineErr ? "border-destructive focus:ring-destructive" : ""}
+                    aria-invalid={!!mineErr}
+                  >
+                    <SelectValue placeholder="Choose one of your items" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {myItems.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>
+                        {i.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {mineErr && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {mineErr}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Item you want from {otherUserName ?? "them"}
@@ -205,6 +240,14 @@ export function StartSwapDialog({
                 </p>
               )}
             </div>
+            <SwapModeFields
+              swapType={swapType}
+              onSwapTypeChange={setSwapType}
+              returnBy={returnBy}
+              onReturnByChange={setReturnBy}
+              error={returnErr}
+              disabled={submitting}
+            />
             <Textarea
               placeholder="Add a short message (optional)…"
               value={message}

@@ -25,6 +25,7 @@ import { Route as AuthenticatedGameRouteImport } from './routes/_authenticated/g
 import { Route as AuthenticatedMeIndexRouteImport } from './routes/_authenticated/me.index'
 import { Route as AuthenticatedGameIndexRouteImport } from './routes/_authenticated/game.index'
 import { Route as AuthenticatedMeOffersRouteImport } from './routes/_authenticated/me.offers'
+import { Route as AuthenticatedMeLeavesRouteImport } from './routes/_authenticated/me.leaves'
 import { Route as AuthenticatedMeItemsRouteImport } from './routes/_authenticated/me.items'
 import { Route as AuthenticatedGameMatchesRouteImport } from './routes/_authenticated/game.matches'
 import { Route as AuthenticatedChatOfferIdRouteImport } from './routes/_authenticated/chat.$offerId'
@@ -113,6 +114,11 @@ const AuthenticatedMeOffersRoute = AuthenticatedMeOffersRouteImport.update({
   path: '/offers',
   getParentRoute: () => AuthenticatedMeRoute,
 } as any)
+const AuthenticatedMeLeavesRoute = AuthenticatedMeLeavesRouteImport.update({
+  id: '/leaves',
+  path: '/leaves',
+  getParentRoute: () => AuthenticatedMeRoute,
+} as any)
 const AuthenticatedMeItemsRoute = AuthenticatedMeItemsRouteImport.update({
   id: '/items',
   path: '/items',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/chat/$offerId': typeof AuthenticatedChatOfferIdRoute
   '/game/matches': typeof AuthenticatedGameMatchesRoute
   '/me/items': typeof AuthenticatedMeItemsRouteWithChildren
+  '/me/leaves': typeof AuthenticatedMeLeavesRoute
   '/me/offers': typeof AuthenticatedMeOffersRoute
   '/game/': typeof AuthenticatedGameIndexRoute
   '/me/': typeof AuthenticatedMeIndexRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/profile/$userId': typeof ProfileUserIdRoute
   '/chat/$offerId': typeof AuthenticatedChatOfferIdRoute
   '/game/matches': typeof AuthenticatedGameMatchesRoute
+  '/me/leaves': typeof AuthenticatedMeLeavesRoute
   '/me/offers': typeof AuthenticatedMeOffersRoute
   '/game': typeof AuthenticatedGameIndexRoute
   '/me': typeof AuthenticatedMeIndexRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$offerId': typeof AuthenticatedChatOfferIdRoute
   '/_authenticated/game/matches': typeof AuthenticatedGameMatchesRoute
   '/_authenticated/me/items': typeof AuthenticatedMeItemsRouteWithChildren
+  '/_authenticated/me/leaves': typeof AuthenticatedMeLeavesRoute
   '/_authenticated/me/offers': typeof AuthenticatedMeOffersRoute
   '/_authenticated/game/': typeof AuthenticatedGameIndexRoute
   '/_authenticated/me/': typeof AuthenticatedMeIndexRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/chat/$offerId'
     | '/game/matches'
     | '/me/items'
+    | '/me/leaves'
     | '/me/offers'
     | '/game/'
     | '/me/'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/profile/$userId'
     | '/chat/$offerId'
     | '/game/matches'
+    | '/me/leaves'
     | '/me/offers'
     | '/game'
     | '/me'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$offerId'
     | '/_authenticated/game/matches'
     | '/_authenticated/me/items'
+    | '/_authenticated/me/leaves'
     | '/_authenticated/me/offers'
     | '/_authenticated/game/'
     | '/_authenticated/me/'
@@ -436,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMeOffersRouteImport
       parentRoute: typeof AuthenticatedMeRoute
     }
+    '/_authenticated/me/leaves': {
+      id: '/_authenticated/me/leaves'
+      path: '/leaves'
+      fullPath: '/me/leaves'
+      preLoaderRoute: typeof AuthenticatedMeLeavesRouteImport
+      parentRoute: typeof AuthenticatedMeRoute
+    }
     '/_authenticated/me/items': {
       id: '/_authenticated/me/items'
       path: '/items'
@@ -527,12 +546,14 @@ const AuthenticatedMeItemsRouteWithChildren =
 
 interface AuthenticatedMeRouteChildren {
   AuthenticatedMeItemsRoute: typeof AuthenticatedMeItemsRouteWithChildren
+  AuthenticatedMeLeavesRoute: typeof AuthenticatedMeLeavesRoute
   AuthenticatedMeOffersRoute: typeof AuthenticatedMeOffersRoute
   AuthenticatedMeIndexRoute: typeof AuthenticatedMeIndexRoute
 }
 
 const AuthenticatedMeRouteChildren: AuthenticatedMeRouteChildren = {
   AuthenticatedMeItemsRoute: AuthenticatedMeItemsRouteWithChildren,
+  AuthenticatedMeLeavesRoute: AuthenticatedMeLeavesRoute,
   AuthenticatedMeOffersRoute: AuthenticatedMeOffersRoute,
   AuthenticatedMeIndexRoute: AuthenticatedMeIndexRoute,
 }

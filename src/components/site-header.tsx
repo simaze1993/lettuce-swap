@@ -2,6 +2,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLeavesBalance } from "@/hooks/use-leaves";
+import { LEAF } from "@/lib/leaves";
 import { useUnreadMessages } from "@/hooks/use-unread-messages";
 import { useNotificationPrefs } from "@/hooks/use-notification-prefs";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,9 +20,11 @@ import {
 import { SwapItLogo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CATEGORIES } from "@/lib/constants";
+import { GAME_MODE_ENABLED } from "@/lib/features";
 
 export function SiteHeader() {
   const { user, signOut, loading } = useAuth();
+  const { balance } = useLeavesBalance();
   const { unreadCount } = useUnreadMessages();
   const { prefs } = useNotificationPrefs();
   const showBadge = prefs.badge && unreadCount > 0;
@@ -129,13 +133,24 @@ export function SiteHeader() {
               Nearby
             </Link>
           )}
-          {user && (
+          {user && GAME_MODE_ENABLED && (
             <Link
               to="/game"
               activeProps={{ className: "text-foreground" }}
               className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
             >
               🎮 Game
+            </Link>
+          )}
+          {user && (
+            <Link
+              to="/me/leaves"
+              activeProps={{ className: "ring-primary" }}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 ring-1 ring-primary/20 px-3 py-1 text-xs font-semibold text-primary hover:ring-primary/50 transition tabular-nums"
+              aria-label={`My Lettuce Leaves: ${balance}`}
+            >
+              <span aria-hidden>{LEAF}</span>
+              {balance.toLocaleString()}
             </Link>
           )}
           {user && (
@@ -296,12 +311,26 @@ export function SiteHeader() {
                         Nearby
                       </Link>
                     </SheetClose>
+                    {GAME_MODE_ENABLED && (
+                      <SheetClose asChild>
+                        <Link
+                          to="/game"
+                          className="px-4 py-3 rounded-md hover:bg-accent text-foreground"
+                        >
+                          🎮 Game Mode
+                        </Link>
+                      </SheetClose>
+                    )}
                     <SheetClose asChild>
                       <Link
-                        to="/game"
-                        className="px-4 py-3 rounded-md hover:bg-accent text-foreground"
+                        to="/me/leaves"
+                        className="px-4 py-3 rounded-md hover:bg-accent text-foreground inline-flex items-center justify-between"
                       >
-                        🎮 Game Mode
+                        <span>My Leaves</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 ring-1 ring-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary tabular-nums">
+                          <span aria-hidden>{LEAF}</span>
+                          {balance.toLocaleString()}
+                        </span>
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { LogoBackdrop } from "@/components/logo-backdrop";
-import logoSvg from "@/assets/logo.svg";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 export const Route = createFileRoute("/")({
   component: Splash,
@@ -32,7 +32,7 @@ function Splash() {
     el?.focus();
   }, []);
 
-  const maskSrc = logoSvg;
+  const maskSrc = BRAND_LOGO_URL;
 
   return (
     <div
