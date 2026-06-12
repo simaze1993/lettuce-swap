@@ -138,6 +138,87 @@ export type Database = {
           },
         ];
       };
+      leaves_accounts: {
+        Row: {
+          balance: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          balance?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          balance?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leaves_accounts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      leaves_ledger: {
+        Row: {
+          counterparty_id: string | null;
+          created_at: string;
+          delta: number;
+          id: string;
+          kind: Database["public"]["Enums"]["leaf_entry_kind"];
+          note: string;
+          offer_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          counterparty_id?: string | null;
+          created_at?: string;
+          delta: number;
+          id?: string;
+          kind: Database["public"]["Enums"]["leaf_entry_kind"];
+          note?: string;
+          offer_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          counterparty_id?: string | null;
+          created_at?: string;
+          delta?: number;
+          id?: string;
+          kind?: Database["public"]["Enums"]["leaf_entry_kind"];
+          note?: string;
+          offer_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leaves_ledger_counterparty_id_fkey";
+            columns: ["counterparty_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leaves_ledger_offer_id_fkey";
+            columns: ["offer_id"];
+            isOneToOne: false;
+            referencedRelation: "offers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leaves_ledger_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       messages: {
         Row: {
           body: string;
@@ -182,8 +263,9 @@ export type Database = {
           created_at: string;
           from_user_id: string;
           id: string;
+          leaves_amount: number | null;
           message: string;
-          offered_item_id: string;
+          offered_item_id: string | null;
           requested_item_id: string;
           return_by: string | null;
           status: Database["public"]["Enums"]["offer_status"];
@@ -195,8 +277,9 @@ export type Database = {
           created_at?: string;
           from_user_id: string;
           id?: string;
+          leaves_amount?: number | null;
           message?: string;
-          offered_item_id: string;
+          offered_item_id?: string | null;
           requested_item_id: string;
           return_by?: string | null;
           status?: Database["public"]["Enums"]["offer_status"];
@@ -208,8 +291,9 @@ export type Database = {
           created_at?: string;
           from_user_id?: string;
           id?: string;
+          leaves_amount?: number | null;
           message?: string;
-          offered_item_id?: string;
+          offered_item_id?: string | null;
           requested_item_id?: string;
           return_by?: string | null;
           status?: Database["public"]["Enums"]["offer_status"];
@@ -260,6 +344,8 @@ export type Database = {
           lat: number | null;
           lng: number | null;
           postcode: string;
+          referral_code: string;
+          referred_by: string | null;
           verified: boolean;
         };
         Insert: {
@@ -273,6 +359,8 @@ export type Database = {
           lat?: number | null;
           lng?: number | null;
           postcode?: string;
+          referral_code?: string;
+          referred_by?: string | null;
           verified?: boolean;
         };
         Update: {
@@ -286,9 +374,19 @@ export type Database = {
           lat?: number | null;
           lng?: number | null;
           postcode?: string;
+          referral_code?: string;
+          referred_by?: string | null;
           verified?: boolean;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey";
+            columns: ["referred_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       reviews: {
         Row: {
@@ -360,6 +458,8 @@ export type Database = {
           lat: number | null;
           lng: number | null;
           postcode: string;
+          referral_code: string;
+          referred_by: string | null;
           verified: boolean;
         }[];
         SetofOptions: {
@@ -382,6 +482,17 @@ export type Database = {
           verified: boolean;
         }[];
       };
+      leaves_apply: {
+        Args: {
+          p_counterparty?: string;
+          p_delta: number;
+          p_kind: Database["public"]["Enums"]["leaf_entry_kind"];
+          p_note?: string;
+          p_offer?: string;
+          p_user: string;
+        };
+        Returns: undefined;
+      };
       record_game_like: {
         Args: { p_from_item_id: string; p_to_item_id: string };
         Returns: {
@@ -389,6 +500,7 @@ export type Database = {
           offer_id: string;
         }[];
       };
+      redeem_referral_code: { Args: { p_code: string }; Returns: number };
       request_verification: { Args: never; Returns: undefined };
     };
     Enums: {
@@ -404,6 +516,16 @@ export type Database = {
         | "music_movies"
         | "books";
       item_status: "available" | "reserved" | "swapped";
+      leaf_entry_kind:
+        | "signup_bonus"
+        | "invite_bonus"
+        | "community_bonus"
+        | "promo_bonus"
+        | "swap_payment"
+        | "swap_income"
+        | "swap_refund"
+        | "swap_bonus"
+        | "adjustment";
       offer_status: "pending" | "accepted" | "declined" | "completed" | "cancelled";
       swap_type: "temporary" | "definitive";
     };
@@ -544,6 +666,17 @@ export const Constants = {
         "books",
       ],
       item_status: ["available", "reserved", "swapped"],
+      leaf_entry_kind: [
+        "signup_bonus",
+        "invite_bonus",
+        "community_bonus",
+        "promo_bonus",
+        "swap_payment",
+        "swap_income",
+        "swap_refund",
+        "swap_bonus",
+        "adjustment",
+      ],
       offer_status: ["pending", "accepted", "declined", "completed", "cancelled"],
       swap_type: ["temporary", "definitive"],
     },

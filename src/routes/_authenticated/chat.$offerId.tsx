@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { SwapModeBadge, DueBadge } from "@/components/swap-badges";
+import { formatLeaves } from "@/lib/leaves";
 import { toast } from "sonner";
 import { CalendarClock, MapPin, Check, X, Lock, AlertCircle } from "lucide-react";
 
@@ -239,8 +240,11 @@ function Chat() {
           )}
         </div>
         <div className="text-sm text-muted-foreground">
-          <em>{(offer.offered as { title: string })?.title}</em> ⇄{" "}
-          <em>{(offer.requested as { title: string })?.title}</em>
+          <em>
+            {(offer.offered as { title: string } | null)?.title ??
+              (offer.leaves_amount ? formatLeaves(offer.leaves_amount) : "—")}
+          </em>{" "}
+          ⇄ <em>{(offer.requested as { title: string })?.title}</em>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <SwapModeBadge swapType={offer.swap_type} />
