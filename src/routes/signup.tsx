@@ -73,8 +73,8 @@ function Signup() {
         </div>
         <h1 className="font-serif text-4xl">Check your inbox</h1>
         <p className="text-sm text-muted-foreground">
-          We sent an activation link to <strong className="text-foreground">{sentTo}</strong>.
-          Click it to activate your account, then come back and sign in.
+          We sent an activation link to <strong className="text-foreground">{sentTo}</strong>. Click
+          it to activate your account, then come back and sign in.
         </p>
         <p className="text-xs text-muted-foreground">
           Nothing arrived? Check your spam folder, or try signing up again in a few minutes.

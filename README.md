@@ -54,37 +54,61 @@ a Supabase project you own:
 4. Regenerate types if you change the schema:
    `supabase gen types typescript --linked > src/integrations/supabase/types.ts`
 
-## Run the app locally
+## Which command do I run?
 
-```bash
-bun run dev
+| I want to…                                   | Command          | What it does |
+| -------------------------------------------- | ---------------- | ------------ |
+| Edit code and see changes live, on my laptop | `bun run dev`    | Starts a hot-reloading dev server at `http://localhost:8080`. **Nothing is published** — only you can see it. |
+| Compile a production bundle (no upload)      | `bun run build`  | Builds the Cloudflare worker + static assets into `dist/`. A pre-flight check; doesn't go live. |
+| Preview that production bundle locally       | `bun run preview`| Serves the built `dist/` so you can sanity-check the prod build before deploying. |
+| **Publish the latest version to the web**    | `bun run deploy` | Runs `build`, then uploads to Cloudflare. Goes **live** at your `*.workers.dev` URL. |
+| Validate a deploy without publishing         | `bun run deploy:dry` | Same as deploy but stops just before upload — proves the build + worker are valid. |
+
+Quality gates (optional, run anytime): `bun run typecheck`, `bun run lint`,
+`bun run format`, `bun run check:theme`.
+
+> **Day-to-day:** use `bun run dev` while building features. When you're happy
+> and want the world to see it, run `bun run deploy`. That's the whole loop.
+
+## Deploy the latest version (incl. Lettuce Leaves 🥬 credits)
+
+There are **two layers**, and they ship independently:
+
+1. **Database (Supabase)** — tables, RLS, and the credit-system functions live
+   in `supabase/migrations/`. These are applied to the Supabase project, **not**
+   by `bun run deploy`. The current migrations (including Lettuce Leaves) are
+   already applied to the live project, so you normally don't need to touch this.
+   If you add a new migration, apply it with the Supabase CLI:
+   ```bash
+   supabase db push          # requires `supabase link` to your project once
+   ```
+2. **App (Cloudflare Worker)** — the frontend + SSR that talk to Supabase. This
+   is what `bun run deploy` publishes.
+
+**One-time setup for deploys** — Wrangler needs a Cloudflare API token (this
+project's OAuth login is unreliable, so use a token). Create one at
+**Cloudflare dashboard → My Profile → API Tokens → "Edit Cloudflare Workers"**,
+then add it to `.env` (it's gitignored):
+
+```env
+CLOUDFLARE_API_TOKEN=<your-token>
 ```
 
-The dev server prints a local URL (typically `http://localhost:8080`).
-Open it in your browser — hot reload is enabled.
-
-## Other useful scripts
+**Then, every time you want to go live:**
 
 ```bash
-bun run build       # production build (Cloudflare worker + client assets)
-bun run lint        # run ESLint
-bun run format      # run Prettier
-bun run check:theme # verify theme tokens
+bun run deploy
 ```
 
-## Deployment
+That's it — it builds and uploads, and prints the live URL (e.g.
+`https://lettuce-swap.simaze.workers.dev`). No Cloudflare secrets are needed at
+runtime: the `VITE_*` Supabase keys are baked into the bundle at build time, so
+keeping `.env` correct is all that's required.
 
-The production build targets a **Cloudflare module worker**
-(`@cloudflare/vite-plugin` + `wrangler.jsonc`, server entry `src/server.ts`).
-Deploy with [Wrangler](https://developers.cloudflare.com/workers/wrangler/):
-
-```bash
-bun run build
-bunx wrangler deploy
-```
-
-Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (and `SUPABASE_SERVICE_ROLE_KEY`
-if you use the admin client) as Worker secrets: `bunx wrangler secret put <NAME>`.
+> The unused server-only admin client (`src/integrations/supabase/client.server.ts`)
+> would need `SUPABASE_SERVICE_ROLE_KEY` as a Worker secret
+> (`bunx wrangler secret put SUPABASE_SERVICE_ROLE_KEY`) — but nothing imports it
+> today, so you can ignore this until you actually use it.
 
 If you prefer a different host, remove the `cloudflare()` plugin from
 `vite.config.ts` and `wrangler.jsonc`, and follow the
