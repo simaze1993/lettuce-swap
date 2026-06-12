@@ -185,7 +185,9 @@ export type Database = {
           message: string;
           offered_item_id: string;
           requested_item_id: string;
+          return_by: string | null;
           status: Database["public"]["Enums"]["offer_status"];
+          swap_type: Database["public"]["Enums"]["swap_type"];
           to_user_id: string;
           updated_at: string;
         };
@@ -196,7 +198,9 @@ export type Database = {
           message?: string;
           offered_item_id: string;
           requested_item_id: string;
+          return_by?: string | null;
           status?: Database["public"]["Enums"]["offer_status"];
+          swap_type?: Database["public"]["Enums"]["swap_type"];
           to_user_id: string;
           updated_at?: string;
         };
@@ -207,7 +211,9 @@ export type Database = {
           message?: string;
           offered_item_id?: string;
           requested_item_id?: string;
+          return_by?: string | null;
           status?: Database["public"]["Enums"]["offer_status"];
+          swap_type?: Database["public"]["Enums"]["swap_type"];
           to_user_id?: string;
           updated_at?: string;
         };

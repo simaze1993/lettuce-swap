@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { SwapModeFields } from "@/components/swap-mode-fields";
+import type { SwapType } from "@/lib/swap";
 
 export function StartSwapDialog({
   otherUserId,
@@ -49,6 +51,8 @@ export function StartSwapDialog({
   const [mine, setMine] = useState("");
   const [theirs, setTheirs] = useState("");
   const [message, setMessage] = useState("");
+  const [swapType, setSwapType] = useState<SwapType>("definitive");
+  const [returnBy, setReturnBy] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState(false);
 
@@ -83,10 +87,13 @@ export function StartSwapDialog({
   const mineErr = touched && !mine ? "Pick one of your items to offer." : "";
   const theirsErr =
     touched && !theirs ? `Pick an item from ${otherUserName ?? "this member"}.` : "";
+  const returnErr =
+    touched && swapType === "temporary" && !returnBy ? "Pick a return date for the loan." : "";
 
   const submit = async () => {
     setTouched(true);
     if (!mine || !theirs) return;
+    if (swapType === "temporary" && !returnBy) return;
     setSubmitting(true);
     const { data, error } = await supabase
       .from("offers")
@@ -96,6 +103,8 @@ export function StartSwapDialog({
         offered_item_id: mine,
         requested_item_id: theirs,
         message,
+        swap_type: swapType,
+        return_by: swapType === "temporary" ? returnBy : null,
       })
       .select("id")
       .single();
@@ -205,6 +214,14 @@ export function StartSwapDialog({
                 </p>
               )}
             </div>
+            <SwapModeFields
+              swapType={swapType}
+              onSwapTypeChange={setSwapType}
+              returnBy={returnBy}
+              onReturnByChange={setReturnBy}
+              error={returnErr}
+              disabled={submitting}
+            />
             <Textarea
               placeholder="Add a short message (optional)…"
               value={message}

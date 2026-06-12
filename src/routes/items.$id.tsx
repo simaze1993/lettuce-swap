@@ -4,6 +4,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabel, categoryIcon, formatWorth } from "@/lib/constants";
 import { GAME_MODE_ENABLED } from "@/lib/features";
+import { SwapModeFields } from "@/components/swap-mode-fields";
+import type { SwapType } from "@/lib/swap";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,7 +159,11 @@ function ItemDetail() {
           </Button>
         ) : user ? (
           <div className="flex flex-wrap gap-2">
-            <OfferDialog itemId={item.id} ownerId={item.owner_id} />
+            <OfferDialog
+              itemId={item.id}
+              ownerId={item.owner_id}
+              requestedSwapType={item.swap_type === "temporary" ? "temporary" : "definitive"}
+            />
             {GAME_MODE_ENABLED && (
               <Button asChild variant="outline" className="rounded-full">
                 <Link to="/game">🎮 Play in Game Mode</Link>
@@ -172,12 +178,23 @@ function ItemDetail() {
   );
 }
 
-function OfferDialog({ itemId, ownerId }: { itemId: string; ownerId: string }) {
+function OfferDialog({
+  itemId,
+  ownerId,
+  requestedSwapType,
+}: {
+  itemId: string;
+  ownerId: string;
+  requestedSwapType: SwapType;
+}) {
   const { user } = useAuth();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [offered, setOffered] = useState<string>("");
   const [message, setMessage] = useState("");
+  const [swapType, setSwapType] = useState<SwapType>(requestedSwapType);
+  const [returnBy, setReturnBy] = useState("");
+  const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const { data: myItems } = useQuery({
@@ -194,11 +211,16 @@ function OfferDialog({ itemId, ownerId }: { itemId: string; ownerId: string }) {
     },
   });
 
+  const returnErr =
+    touched && swapType === "temporary" && !returnBy ? "Pick a return date for the loan." : "";
+
   const submit = async () => {
+    setTouched(true);
     if (!offered) {
       toast.error("Pick one of your items to offer.");
       return;
     }
+    if (swapType === "temporary" && !returnBy) return;
     setSubmitting(true);
     const { data, error } = await supabase
       .from("offers")
@@ -208,6 +230,8 @@ function OfferDialog({ itemId, ownerId }: { itemId: string; ownerId: string }) {
         requested_item_id: itemId,
         offered_item_id: offered,
         message,
+        swap_type: swapType,
+        return_by: swapType === "temporary" ? returnBy : null,
       })
       .select("id")
       .single();
@@ -253,6 +277,14 @@ function OfferDialog({ itemId, ownerId }: { itemId: string; ownerId: string }) {
                 ))}
               </SelectContent>
             </Select>
+            <SwapModeFields
+              swapType={swapType}
+              onSwapTypeChange={setSwapType}
+              returnBy={returnBy}
+              onReturnByChange={setReturnBy}
+              error={returnErr}
+              disabled={submitting}
+            />
             <Textarea
               placeholder="Optional message…"
               value={message}

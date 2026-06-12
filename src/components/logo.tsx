@@ -11,7 +11,10 @@ export function SwapItLogo({ className }: { className?: string }) {
       src={BRAND_LOGO_URL}
       alt="Lettuce Swap"
       draggable={false}
-      className={["select-none object-contain dark:drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]", className]
+      className={[
+        "select-none object-contain dark:drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
       style={{ aspectRatio: "1 / 1" }}
