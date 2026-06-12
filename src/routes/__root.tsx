@@ -10,7 +10,7 @@ import {
 import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
-import logoLightUrl from "@/assets/logo-light.png?url";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { UnreadMessagesProvider } from "@/hooks/use-unread-messages";
@@ -77,15 +77,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "preload", as: "image", href: logoLightUrl, fetchPriority: "high" },
-      { rel: "icon", type: "image/x-icon", href: "/favicon.ico?v=2" },
-      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16.png?v=2" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png?v=2" },
-      { rel: "icon", type: "image/png", sizes: "48x48", href: "/favicon-48.png?v=2" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/favicon-192.png?v=2" },
-      { rel: "icon", type: "image/png", sizes: "512x512", href: "/favicon-512.png?v=2" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=2" },
-      { rel: "manifest", href: "/site.webmanifest?v=2" },
+      { rel: "preload", as: "image", href: BRAND_LOGO_URL, fetchPriority: "high" },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico?v=3" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16.png?v=3" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png?v=3" },
+      { rel: "icon", type: "image/png", sizes: "48x48", href: "/favicon-48.png?v=3" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/favicon-192.png?v=3" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/favicon-512.png?v=3" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=3" },
+      { rel: "manifest", href: "/site.webmanifest?v=3" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

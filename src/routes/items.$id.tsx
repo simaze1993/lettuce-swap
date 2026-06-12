@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabel, categoryIcon, formatWorth } from "@/lib/constants";
+import { GAME_MODE_ENABLED } from "@/lib/features";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,9 +158,11 @@ function ItemDetail() {
         ) : user ? (
           <div className="flex flex-wrap gap-2">
             <OfferDialog itemId={item.id} ownerId={item.owner_id} />
-            <Button asChild variant="outline" className="rounded-full">
-              <Link to="/game">🎮 Play in Game Mode</Link>
-            </Button>
+            {GAME_MODE_ENABLED && (
+              <Button asChild variant="outline" className="rounded-full">
+                <Link to="/game">🎮 Play in Game Mode</Link>
+              </Button>
+            )}
           </div>
         ) : (
           <Button onClick={() => nav({ to: "/login" })}>Sign in to make an offer</Button>

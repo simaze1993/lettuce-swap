@@ -18,6 +18,7 @@ import {
 import { SwapItLogo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CATEGORIES } from "@/lib/constants";
+import { GAME_MODE_ENABLED } from "@/lib/features";
 
 export function SiteHeader() {
   const { user, signOut, loading } = useAuth();
@@ -129,7 +130,7 @@ export function SiteHeader() {
               Nearby
             </Link>
           )}
-          {user && (
+          {user && GAME_MODE_ENABLED && (
             <Link
               to="/game"
               activeProps={{ className: "text-foreground" }}
@@ -296,14 +297,16 @@ export function SiteHeader() {
                         Nearby
                       </Link>
                     </SheetClose>
-                    <SheetClose asChild>
-                      <Link
-                        to="/game"
-                        className="px-4 py-3 rounded-md hover:bg-accent text-foreground"
-                      >
-                        🎮 Game Mode
-                      </Link>
-                    </SheetClose>
+                    {GAME_MODE_ENABLED && (
+                      <SheetClose asChild>
+                        <Link
+                          to="/game"
+                          className="px-4 py-3 rounded-md hover:bg-accent text-foreground"
+                        >
+                          🎮 Game Mode
+                        </Link>
+                      </SheetClose>
+                    )}
                     <SheetClose asChild>
                       <Link
                         to="/me/offers"

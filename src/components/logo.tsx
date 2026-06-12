@@ -1,26 +1,20 @@
-import logoSvg from "@/assets/logo.svg";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 export function SwapItLogo({ className }: { className?: string }) {
-  // Render the SVG as a mask so we can tint it with the theme's primary color
-  // (works identically in light and dark — the primary token already adapts).
+  // The brand mark is full-colour artwork on a transparent background, so it
+  // sits cleanly on both the light and dark themes. We render it as a plain
+  // <img> (rather than a tinted CSS mask) to preserve the green gradient of the
+  // leaf and the "swap" wordmark. The drop-shadow utility lifts it slightly on
+  // dark backgrounds for legibility without altering the artwork's colours.
   return (
-    <span
-      role="img"
-      aria-label="Lettuce Swap logo"
-      className={className}
-      style={{
-        display: "inline-block",
-        backgroundColor: "var(--color-primary)",
-        WebkitMaskImage: `url(${logoSvg})`,
-        maskImage: `url(${logoSvg})`,
-        WebkitMaskRepeat: "no-repeat",
-        maskRepeat: "no-repeat",
-        WebkitMaskPosition: "center",
-        maskPosition: "center",
-        WebkitMaskSize: "contain",
-        maskSize: "contain",
-        aspectRatio: "1649 / 1520",
-      }}
+    <img
+      src={BRAND_LOGO_URL}
+      alt="Lettuce Swap"
+      draggable={false}
+      className={["select-none object-contain dark:drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={{ aspectRatio: "1 / 1" }}
     />
   );
 }
