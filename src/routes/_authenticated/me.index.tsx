@@ -27,6 +27,7 @@ import { LocationPicker, type LocationValue } from "@/components/location-picker
 import { BioMarkdown } from "@/components/bio-markdown";
 import { useNavigate } from "@tanstack/react-router";
 import { useUnreadMessages } from "@/hooks/use-unread-messages";
+import { formatLeaves } from "@/lib/leaves";
 
 export const Route = createFileRoute("/_authenticated/me/")({
   component: MyProfile,
@@ -871,6 +872,7 @@ type ChatRow = {
   } | null;
   requested: { title: string } | null;
   offered: { title: string } | null;
+  leaves_amount: number | null;
 };
 
 type LastMessage = { body: string; created_at: string; sender_id: string };
@@ -903,7 +905,7 @@ function ChatsSection() {
           from_user:profiles!offers_from_user_id_fkey(id, display_name, avatar_url, verified),
           to_user:profiles!offers_to_user_id_fkey(id, display_name, avatar_url, verified),
           requested:items!offers_requested_item_id_fkey(title),
-          offered:items!offers_offered_item_id_fkey(title)`,
+          offered:items!offers_offered_item_id_fkey(title), leaves_amount`,
         )
         .or(`from_user_id.eq.${user!.id},to_user_id.eq.${user!.id}`)
         .in("status", ["accepted", "completed"])
@@ -1045,7 +1047,8 @@ function ChatsSection() {
                       {preview}
                     </p>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mt-1 truncate">
-                      {c.offered?.title} ⇄ {c.requested?.title}
+                      {c.offered?.title ?? (c.leaves_amount ? formatLeaves(c.leaves_amount) : "—")}{" "}
+                      ⇄ {c.requested?.title}
                     </p>
                   </div>
                 </Link>
